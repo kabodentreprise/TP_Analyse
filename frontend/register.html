@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - Système de Gestion</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-brand">Système de Gestion</a>
+            <div class="navbar-menu">
+                <a href="login.html" class="navbar-link">Connexion</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="form-container">
+            <h2 class="text-center mb-3">Créer un Compte</h2>
+            
+            <div id="alert-message" class="alert"></div>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="username">Nom d'utilisateur *</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mot de passe *</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="firstName">Prénom</label>
+                    <input type="text" id="firstName" name="firstName">
+                </div>
+
+                <div class="form-group">
+                    <label for="lastName">Nom</label>
+                    <input type="text" id="lastName" name="lastName">
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Téléphone</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+
+                <div class="form-group">
+                    <label>Type de compte *</label>
+                    <div class="checkbox-group">
+                        <div>
+                            <input type="checkbox" id="isClient" name="isClient">
+                            <label for="isClient" style="display: inline; margin: 0;">Client</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="isEmployer" name="isEmployer">
+                            <label for="isEmployer" style="display: inline; margin: 0;">Employé</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">S'inscrire</button>
+            </form>
+
+            <div class="link-auth">
+                <p>Vous avez déjà un compte? <a href="login.html">Connectez-vous</a></p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Système de Gestion. Tous droits réservés.</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            UIUtils.showLoading(submitBtn);
+
+            try {
+                const userData = {
+                    username: document.getElementById('username').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value,
+                    first_name: document.getElementById('firstName').value || null,
+                    last_name: document.getElementById('lastName').value || null,
+                    phone: document.getElementById('phone').value || null,
+                    is_client: document.getElementById('isClient').checked,
+                    is_employer: document.getElementById('isEmployer').checked,
+                };
+
+                const response = await ApiClient.register(userData);
+                AlertManager.success('Inscription réussie! Redirection vers la connexion...');
+                
+                setTimeout(() => {
+                    UIUtils.redirect('login.html');
+                }, 2000);
+            } catch (error) {
+                AlertManager.error(error.message);
+            } finally {
+                UIUtils.hideLoading(submitBtn);
+            }
+        });
+    </script>
+</body>
+</html>

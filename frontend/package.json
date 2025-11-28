@@ -1,0 +1,14 @@
+{
+  "name": "gestion-utilisateurs-frontend",
+  "version": "1.0.0",
+  "description": "Frontend pour gestion des utilisateurs - Admin, Employés, Clients",
+  "type": "module",
+  "scripts": {
+    "dev": "python -m http.server 3000",
+    "build": "echo 'Frontend static, no build needed'",
+    "start": "python -m http.server 3000"
+  },
+  "keywords": ["admin", "users", "authentication"],
+  "author": "",
+  "license": "MIT"
+}

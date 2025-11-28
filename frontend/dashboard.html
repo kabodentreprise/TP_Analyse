@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord - Système de Gestion</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="dashboard.html" class="navbar-brand">Système de Gestion</a>
+            <div class="navbar-menu">
+                <span id="userGreeting" class="navbar-link"></span>
+                <a href="#" id="adminLink" class="navbar-link hidden">Gérer les utilisateurs</a>
+                <button class="btn btn-logout" onclick="logout()">Déconnexion</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="alert-message" class="alert"></div>
+
+        <!-- Tableau de bord Admin -->
+        <div id="adminDashboard" class="hidden">
+            <h2 class="mb-3">Tableau de bord Administrateur</h2>
+            
+            <div class="dashboard">
+                <div class="dashboard-card">
+                    <h3>Total Utilisateurs</h3>
+                    <p id="totalUsers">0</p>
+                </div>
+                <div class="dashboard-card">
+                    <h3>Clients</h3>
+                    <p id="totalClients">0</p>
+                </div>
+                <div class="dashboard-card">
+                    <h3>Employés</h3>
+                    <p id="totalEmployers">0</p>
+                </div>
+                <div class="dashboard-card">
+                    <h3>Administrateurs</h3>
+                    <p id="totalAdmins">0</p>
+                </div>
+            </div>
+
+            <a href="usermanager.html" class="btn btn-secondary mt-3">Gérer les utilisateurs</a>
+        </div>
+
+        <!-- Tableau de bord Employé -->
+        <div id="employerDashboard" class="hidden">
+            <h2 class="mb-3">Tableau de bord Employé</h2>
+            
+            <div class="card">
+                <div class="card-header">Bienvenue Employé</div>
+                <div class="card-body">
+                    <p>Vous êtes connecté en tant qu'employé. Utilisez cette interface pour gérer vos tâches.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau de bord Client -->
+        <div id="clientDashboard" class="hidden">
+            <h2 class="mb-3">Tableau de bord Client</h2>
+            
+            <div class="card">
+                <div class="card-header">Bienvenue Client</div>
+                <div class="card-body">
+                    <p>Vous êtes connecté en tant que client. Consultez votre profil et vos commandes ici.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations utilisateur -->
+        <div class="card mt-3">
+            <div class="card-header">Mes informations</div>
+            <div class="card-body">
+                <p><strong>Nom d'utilisateur:</strong> <span id="displayUsername"></span></p>
+                <p><strong>Email:</strong> <span id="displayEmail"></span></p>
+                <p><strong>Rôle:</strong> <span id="displayRole"></span></p>
+                <p><strong>Inscrit le:</strong> <span id="displayDate"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Système de Gestion. Tous droits réservés.</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        async function initDashboard() {
+            // Vérifier l'authentification
+            if (!AuthStorage.isAuthenticated()) {
+                UIUtils.redirect('login.html');
+                return;
+            }
+
+            const user = AuthStorage.getUser();
+            const token = AuthStorage.getToken();
+
+            // Afficher les infos utilisateur
+            document.getElementById('userGreeting').textContent = `Bienvenue, ${user.username}`;
+            document.getElementById('displayUsername').textContent = user.username;
+            document.getElementById('displayEmail').textContent = user.email;
+            document.getElementById('displayDate').textContent = UIUtils.formatDate(user.created_at);
+            document.getElementById('displayRole').textContent = UIUtils.getRoleLabel(user.is_admin, user.is_employer, user.is_client);
+
+            // Afficher le dashboard selon le rôle
+            if (user.is_admin) {
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                document.getElementById('adminLink').classList.remove('hidden');
+                loadAdminStats(token);
+            } else if (user.is_employer) {
+                document.getElementById('employerDashboard').classList.remove('hidden');
+            } else if (user.is_client) {
+                document.getElementById('clientDashboard').classList.remove('hidden');
+            }
+        }
+
+        async function loadAdminStats(token) {
+            try {
+                const users = await ApiClient.getAllUsers(token);
+                
+                let admins = 0, clients = 0, employers = 0;
+                users.forEach(user => {
+                    if (user.is_admin) admins++;
+                    if (user.is_client) clients++;
+                    if (user.is_employer) employers++;
+                });
+
+                document.getElementById('totalUsers').textContent = users.length;
+                document.getElementById('totalClients').textContent = clients;
+                document.getElementById('totalEmployers').textContent = employers;
+                document.getElementById('totalAdmins').textContent = admins;
+            } catch (error) {
+                AlertManager.error('Erreur lors du chargement des statistiques');
+            }
+        }
+
+        function logout() {
+            AuthStorage.clear();
+            AlertManager.success('Déconnexion réussie');
+            setTimeout(() => {
+                UIUtils.redirect('login.html');
+            }, 1000);
+        }
+
+        // Initialiser le dashboard au chargement
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>

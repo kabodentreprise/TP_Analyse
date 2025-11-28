@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Utilisateurs - Système de Gestion</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="dashboard.html" class="navbar-brand">Système de Gestion</a>
+            <div class="navbar-menu">
+                <a href="dashboard.html" class="navbar-link">Tableau de bord</a>
+                <button class="btn btn-logout" onclick="logout()">Déconnexion</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 class="mb-3">Gestion des Utilisateurs</h2>
+        
+        <div id="alert-message" class="alert"></div>
+
+        <!-- Barre de recherche et filtres -->
+        <div class="card mb-3">
+            <div class="form-group">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Rechercher par nom d'utilisateur ou email..."
+                    style="max-width: 400px;"
+                >
+            </div>
+        </div>
+
+        <!-- Tableau des utilisateurs -->
+        <div class="table-container">
+            <table id="usersTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom d'utilisateur</th>
+                        <th>Email</th>
+                        <th>Nom complet</th>
+                        <th>Rôles</th>
+                        <th>État</th>
+                        <th>Inscrit le</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr>
+                        <td colspan="8" class="text-center">Chargement...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal de modification des rôles -->
+    <div id="roleModal" class="modal hidden" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    ">
+        <div class="card" style="max-width: 500px; width: 90%;">
+            <h3 class="card-header">Modifier les rôles</h3>
+            <div class="card-body">
+                <p id="modalUsername" style="font-weight: bold; margin-bottom: 1rem;"></p>
+                
+                <div id="alert-modal" class="alert"></div>
+
+                <form id="roleForm">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="isAdmin" name="isAdmin"> Administrateur
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="isEmployer" name="isEmployer"> Employé
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="isClient" name="isClient"> Client
+                        </label>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeRoleModal()">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Sauvegarder</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Système de Gestion. Tous droits réservés.</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        let allUsers = [];
+        let currentEditingUserId = null;
+        const token = AuthStorage.getToken();
+
+        // Vérifier les droits d'admin
+        async function checkAdminAccess() {
+            if (!AuthStorage.isAuthenticated()) {
+                UIUtils.redirect('login.html');
+                return;
+            }
+
+            const user = AuthStorage.getUser();
+            if (!user.is_admin) {
+                AlertManager.error('Accès refusé. Vous n\'êtes pas administrateur.');
+                setTimeout(() => UIUtils.redirect('dashboard.html'), 2000);
+                return;
+            }
+        }
+
+        // Charger tous les utilisateurs
+        async function loadUsers() {
+            try {
+                allUsers = await ApiClient.getAllUsers(token);
+                displayUsers(allUsers);
+            } catch (error) {
+                AlertManager.error('Erreur lors du chargement des utilisateurs: ' + error.message);
+            }
+        }
+
+        // Afficher les utilisateurs dans le tableau
+        function displayUsers(users) {
+            const tableBody = document.getElementById('usersTableBody');
+            
+            if (users.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center">Aucun utilisateur trouvé</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td>${user.first_name ? user.first_name + ' ' + (user.last_name || '') : '-'}</td>
+                    <td>
+                        <span class="badge" style="
+                            ${user.is_admin ? 'background: #f44336; color: white;' : 'background: #ddd;'}
+                            padding: 0.25rem 0.5rem;
+                            border-radius: 3px;
+                            margin-right: 0.25rem;
+                            font-size: 0.85rem;
+                        ">
+                            ${user.is_admin ? 'Admin' : ''}
+                        </span>
+                        <span class="badge" style="
+                            ${user.is_employer ? 'background: #2196F3; color: white;' : 'background: #ddd;'}
+                            padding: 0.25rem 0.5rem;
+                            border-radius: 3px;
+                            margin-right: 0.25rem;
+                            font-size: 0.85rem;
+                        ">
+                            ${user.is_employer ? 'Employé' : ''}
+                        </span>
+                        <span class="badge" style="
+                            ${user.is_client ? 'background: #4CAF50; color: white;' : 'background: #ddd;'}
+                            padding: 0.25rem 0.5rem;
+                            border-radius: 3px;
+                            margin-right: 0.25rem;
+                            font-size: 0.85rem;
+                        ">
+                            ${user.is_client ? 'Client' : ''}
+                        </span>
+                    </td>
+                    <td>
+                        <span style="
+                            padding: 0.25rem 0.75rem;
+                            border-radius: 3px;
+                            font-size: 0.9rem;
+                            ${user.is_active ? 'background: #d4edda; color: #155724;' : 'background: #f8d7da; color: #721c24;'}
+                        ">
+                            ${user.is_active ? 'Actif' : 'Inactif'}
+                        </span>
+                    </td>
+                    <td>${UIUtils.formatDate(user.created_at)}</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" onclick="openRoleModal(${user.id}, '${user.username}', ${user.is_admin}, ${user.is_employer}, ${user.is_client})">
+                            Modifier
+                        </button>
+                        <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" onclick="deleteUser(${user.id})">
+                            Supprimer
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Recherche en temps réel
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = allUsers.filter(user => 
+                user.username.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm)
+            );
+            displayUsers(filtered);
+        });
+
+        // Ouvrir le modal de modification des rôles
+        function openRoleModal(userId, username, isAdmin, isEmployer, isClient) {
+            currentEditingUserId = userId;
+            document.getElementById('modalUsername').textContent = `Utilisateur: ${username}`;
+            document.getElementById('isAdmin').checked = isAdmin;
+            document.getElementById('isEmployer').checked = isEmployer;
+            document.getElementById('isClient').checked = isClient;
+            
+            const modal = document.getElementById('roleModal');
+            modal.style.display = 'flex';
+        }
+
+        // Fermer le modal
+        function closeRoleModal() {
+            const modal = document.getElementById('roleModal');
+            modal.style.display = 'none';
+            currentEditingUserId = null;
+        }
+
+        // Soumettre les modifications des rôles
+        document.getElementById('roleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            try {
+                const rolesData = {
+                    is_admin: document.getElementById('isAdmin').checked,
+                    is_employer: document.getElementById('isEmployer').checked,
+                    is_client: document.getElementById('isClient').checked,
+                };
+
+                await ApiClient.updateUserRoles(currentEditingUserId, rolesData, token);
+                AlertManager.success('Rôles mis à jour avec succès!');
+                closeRoleModal();
+                loadUsers();
+            } catch (error) {
+                AlertManager.error('Erreur: ' + error.message, 'alert-modal');
+            }
+        });
+
+        // Supprimer un utilisateur
+        async function deleteUser(userId) {
+            if (!confirm('Êtes-vous sûr de vouloir désactiver cet utilisateur?')) {
+                return;
+            }
+
+            try {
+                await ApiClient.deleteUser(userId, token);
+                AlertManager.success('Utilisateur désactivé');
+                loadUsers();
+            } catch (error) {
+                AlertManager.error('Erreur: ' + error.message);
+            }
+        }
+
+        // Déconnexion
+        function logout() {
+            AuthStorage.clear();
+            AlertManager.success('Déconnexion réussie');
+            setTimeout(() => {
+                UIUtils.redirect('login.html');
+            }, 1000);
+        }
+
+        // Fermer le modal en cliquant en dehors
+        document.getElementById('roleModal').addEventListener('click', (e) => {
+            if (e.target.id === 'roleModal') {
+                closeRoleModal();
+            }
+        });
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAdminAccess();
+            await loadUsers();
+        });
+    </script>
+</body>
+</html>

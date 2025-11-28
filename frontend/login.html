@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Système de Gestion</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-brand">Système de Gestion</a>
+            <div class="navbar-menu">
+                <a href="register.html" class="navbar-link">S'inscrire</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="form-container">
+            <h2 class="text-center mb-3">Connexion</h2>
+            
+            <div id="alert-message" class="alert"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Nom d'utilisateur *</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mot de passe *</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Se connecter</button>
+            </form>
+
+            <div class="link-auth">
+                <p>Pas encore de compte? <a href="register.html">S'inscrire</a></p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Système de Gestion. Tous droits réservés.</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        // Vérifier si l'utilisateur est déjà connecté
+        if (AuthStorage.isAuthenticated()) {
+            UIUtils.redirect('dashboard.html');
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            UIUtils.showLoading(submitBtn);
+
+            try {
+                const credentials = {
+                    username: document.getElementById('username').value,
+                    password: document.getElementById('password').value,
+                };
+
+                const response = await ApiClient.login(credentials);
+                
+                // Stocker le token et l'utilisateur
+                AuthStorage.setToken(response.access_token);
+                AuthStorage.setUser(response.user);
+
+                AlertManager.success('Connexion réussie! Redirection...');
+                
+                // Rediriger selon le rôle
+                setTimeout(() => {
+                    UIUtils.redirect('dashboard.html');
+                }, 1500);
+            } catch (error) {
+                AlertManager.error(error.message);
+            } finally {
+                UIUtils.hideLoading(submitBtn);
+            }
+        });
+    </script>
+</body>
+</html>

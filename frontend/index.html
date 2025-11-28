@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accueil - Système de Gestion</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-brand">Système de Gestion</a>
+            <div class="navbar-menu">
+                <a href="login.html" class="navbar-link">Connexion</a>
+                <a href="register.html" class="navbar-link">S'inscrire</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div style="text-align: center; padding: 3rem 0;">
+            <h1 style="color: var(--primary-color); margin-bottom: 1rem;">Bienvenue</h1>
+            <p style="font-size: 1.2rem; margin-bottom: 2rem;">
+                Système de gestion des utilisateurs avec rôles (Admin, Employé, Client)
+            </p>
+
+            <div class="grid" style="max-width: 800px; margin: 0 auto;">
+                <div class="card">
+                    <div class="card-header">👥 Trois Rôles</div>
+                    <div class="card-body">
+                        <p>Administrateur, Employé ou Client - Chacun avec des permissions différentes</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">🔒 Sécurisé</div>
+                    <div class="card-body">
+                        <p>Authentification par token JWT et gestion des rôles</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">⚙️ Gestion Complète</div>
+                    <div class="card-body">
+                        <p>Interface d'administration pour gérer les utilisateurs</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <a href="register.html" class="btn btn-primary" style="margin-right: 1rem;">S'inscrire</a>
+                <a href="login.html" class="btn btn-secondary">Se connecter</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Système de Gestion. Tous droits réservés.</p>
+    </footer>
+</body>
+</html>
